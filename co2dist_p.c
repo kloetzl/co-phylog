@@ -11,7 +11,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifdef _OMP
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 
@@ -34,7 +34,7 @@ void help(int exit_code)
 
 int main(int argc, char *argv[])
 {
-#ifdef _OMP
+#ifdef _OPENMP
 	THREADS = omp_get_num_procs();
 #endif
 
@@ -42,10 +42,11 @@ int main(int argc, char *argv[])
 	while ((index = getopt(argc, argv, "t:h"))) {
 		if (index == -1) break;
 		if (index == 't'){
-#ifdef _OMP
+#ifdef _OPENMP
 			// parse
 			errno = 0;
-			unsigned long threads = strtoul(optarg);
+			char *end;
+			unsigned long threads = strtoul(optarg, &end, 10);
 			if (errno || end == optarg || *end != '\0') {
 				warnx("Expected a number for -t argument, but '%s' was "
 					  "given. Ignoring -t argument.",
@@ -53,7 +54,7 @@ int main(int argc, char *argv[])
 				break;
 			}
 
-			if (threads > omp_get_num_procs()) {
+			if (threads > (unsigned long)omp_get_num_procs()) {
 				warnx(
 					"The number of threads to be used, is greater than the "
 					"number of available processors; Ignoring -t %lu "
@@ -65,8 +66,8 @@ int main(int argc, char *argv[])
 			warnx("This version of co2dist_p was built without OpenMP and "
 				  "thus does not support multi threading. Ignoring -t "
 				  "argument.");
-			break;
 #endif
+			break;
 		} else if (index == 'h') help(0);
 		else help(1);
 	}
